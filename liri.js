@@ -1,37 +1,3 @@
-/*
-//liri supported commands: 
-
-concert-this <artist/band-name>
-    serach bands in a town for an artist and render
-        name of venue,
-        venue location, 
-        date of event formatted mm/dd/yyyy
-        
-spotify-this-song <song-name>
-    returns from spotify api
-        artist
-        song name
-        preview link of song is from spotify
-        album that the song is from
-        default value = the sign by ace of base
-movie-this <movie-name>
-    grab from omdb:
-        title of movie
-        year of release
-        imdb rating 
-        rotten tomatoes rating
-        country where produced
-        plot
-        actors in the movie
-        defaults to "mr mobody"
-
-do-what-it-says
-
-const var bandsintown_endpoint = "https://rest.bandsintown.com/artists/" + artist + "/events?app_id=codingbootcamp"
-*/
-
-const util = require('util');
-
 require("dotenv").config();
 var keys = require("./keys.js");
 var Spotify = require('node-spotify-api');
@@ -79,13 +45,16 @@ var liri_app = {
                 if (arg == "" || arg == undefined) {
                     this.log_command("Error: please enter an artist");
                 }
-                this.lookup_concert_by_artist(this.liri_arg);
+                else {
+                    this.lookup_concert_by_artist(arg);
+                }
+
                 break;
             case "spotify-this-song":
                 //call spotify api
                 this.song_name = "I saw the sign";
                 if (arg !="" && this.liri_arg != undefined) {
-                    this.song_name = this.liri_arg;
+                    this.song_name = arg;
                 }
                 this.log_command("Searching Spotify...");
                 spotify.search({ type: 'track', query: this.song_name }, function(err, data) {
@@ -124,7 +93,7 @@ var liri_app = {
     },
     log_command: function (log_message) {
         console.log(log_message);
-        //append the message to the loggile
+        //append the message to the logfile
         //via https://stackoverflow.com/question/3459476/how-to-append-to-a-file-in-node/43370201#43370201 concerning appending vs opening a write stream. ie never use append node as it creates a new file handle and will eventually get an EMFILE console.error();
 
     },
@@ -152,43 +121,44 @@ var liri_app = {
             })
     },
     display_spotify_song_info: function (song_data) {
-        this.log_command('Spotify Song Information:\n');
-        console.log(util.inspect(song_data.tracks.items[0].artists));
+
         var artists = "";
         song_data.tracks.items[0].artists.forEach(function(element) {
             artists += element.name + " ";
         });
-        this.log_command('Artist: ' + song_data.tracks.items[0].artist.toString() + '\n');
+        this.log_command('Artist: ' + artists+ '\n');
         this.log_command('Song Name: ' + song_data.tracks.items[0].name + '\n');
         this.log_command('Preview URL: ' + song_data.tracks.items[0].preview_url + '\n');
         this.log_command('Album: ' + song_data.tracks.items[0].album.name + '\n');
        
     },
     request_movie_info: function (movie_name) {
-        var omdb_request_url = omdb_request_url + "s=" + movie_title + "&type=movie&plot=short";
+        var omdb_request_url = omdb_request_url + "t=" + endcodeURI(movie_name) + "&type=movie&plot=short";
         axios.get(omdb_request_url)
             .then(function (response) {
                 var rotten_tomatoes_score = "";
-                response.Ratings.forEach(function(element) {
-                    if(element.source == "Rotten Tomatoes") {
-                        rotten_tomatoes_score = element.Value;
-                    }
-                });
+                if (response.data.Ratings != undefined) {
+                    response.Ratings.forEach(function(element) {
+                        if(element.source == "Rotten Tomatoes") {
+                            rotten_tomatoes_score = element.Value;
+                        }
+                    });
+                }    
+
                 if(rotten_tomatoes_score == "")
                     rotten_tomatoes_score = "N/A";
                 liri_app.log_command('OMDB Request Successful');
-                liri_app.log_command('Movie title: ' + response.Title);
-                liri_app.log_command('Year of Release: ' + response.Year);
-                liri_app.log_command('IMDB Rating: ' + response.imdbRating);
+                liri_app.log_command('Movie title: ' + response.data.Title);
+                liri_app.log_command('Year of Release: ' + response.data.Year);
+                liri_app.log_command('IMDB Rating: ' + response.data.imdbRating);
                 liri_app.log_command('Rotten Tomatoes: ' + rotten_tomatoes_score);
-                liri_app.log_command('Country: ' + response.Country);
-                liri_app.log_command('Plot: ' + response.Plot);
-                liri_app.log_command('Actors: ' + response.Actors);
+                liri_app.log_command('Country: ' + response.data.Country);
+                liri_app.log_command('Plot: ' + response.data.Plot);
+                liri_app.log_command('Actors: ' + response.data.Actors);
           })
           .catch(function(err) {
             this.log_command(err);
           });   
-
     },
     run_file_command: function (filename) {
         fs.readFile(filename, (err,data) => {
