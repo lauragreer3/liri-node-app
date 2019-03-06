@@ -17,7 +17,7 @@ What Each Command Does:
 concert-this:
 Type node liri.js concert-this <artist/band name> into the command line.
 
-![Alt Text](images/concert-this-comman.PNG)
+![Alt Text](images/concert-this-command.PNG)
 
 This will search the Bands in Town Artist Events API for an artist and render the following information about each event to the terminal:
 
